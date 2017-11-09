@@ -7,10 +7,30 @@
         - 'artifacts is defined'
         - 'cri_o_dest_path | default("", True) | trim | length'
 
-- name: Directory exists for smoke test output
+- name: Confirm that output directory exists
   file:
     path: "{{ artifacts }}"
     state: directory
+
+- name: Build RPM
+  shell: |
+    set -ex;
+    (
+        cd "{{ cri_o_dest_path }}";
+        yum-builddep -y cri-o-testonly.spec;
+        make test-rpm;
+    ) 2>&1 | tee -a {{ artifacts }}/rpmbuild.txt;
+  tags: build
+
+- name: Execute command for installing RPM
+  shell: |
+    set -ex;
+    (
+        cd "{{ cri_o_dest_path }}";
+        rm -f *.src.rpm;
+        $(type -P dnf || type -P yum) install -y $(find -name '*.rpm');
+    ) 2>&1 | tee -a {{ artifacts }}/rpminstall.txt;
+  tags: install
 
 # STUB: This should be replaced by more comprehensive testing stuffs
 - name: Execute commands for testing that installed RPM(s) are functioning
@@ -21,3 +41,4 @@
         systemctl restart cri-o;
         crioctl --version;
     ) 2>&1 | tee -a {{ artifacts }}/rpmsmoke.txt
+  tags: smoke

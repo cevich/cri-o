@@ -9,16 +9,16 @@
         - setup
 
     - name: Build CRI-O
-      include: build.yml
+      include: cmdrunner.yml tags=build
       tags:
         - always
 
     - block:
         - name: Install CRI-O
-          include: install.yml
+          include: cmdrunner.yml tags=install
 
         - name: Smoke test Installed CRI-O
-          include: smoke.yml
+          include: cmdrunner.yml tags=smoke
 
         - name: Execute Kubernetes e2e tests
           include: e2e.yml
